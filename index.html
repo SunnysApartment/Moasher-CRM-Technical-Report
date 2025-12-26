@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+
+<html lang="ar" dir="rtl">
+
+<head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Moasher CRM Technical Report (Arabic)</title> <script src="https://cdn.tailwindcss.com"></script> <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet"> <script src="https://unpkg.com/lucide@latest"></script> <style> body { font-family: 'Cairo', sans-serif; } pre { direction: ltr; text-align: left; background-color: #f1f5f9; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-family: monospace; font-size: 0.875rem; color: #334155; border: 1px solid #cbd5e1; } code { font-family: monospace; } </style> </head>
+
+<body class="bg-slate-50 text-slate-800">
+
+<header class="bg-blue-900 text-white shadow-lg">
+    <div class="container mx-auto px-4 py-8">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">تقرير التدقيق الفني لـ Moasher CRM</h1>
+                <p class="text-blue-200">تدقيق فني شامل، تحليل للمشاكل، استراتيجية الإصلاح، وتوصيات الأمان.</p>
+            </div>
+            <div class="bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm">
+                <span class="text-sm text-blue-100 block">تاريخ التقرير</span>
+                <span class="font-semibold">26 ديسمبر 2025</span>
+            </div>
+        </div>
+    </div>
+</header>
+
+<main class="container mx-auto px-4 py-8 space-y-8">
+
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex items-center gap-3">
+            <i data-lucide="file-text" class="text-blue-600 w-6 h-6"></i>
+            <h2 class="text-xl font-bold text-slate-800">الملخص التنفيذي</h2>
+        </div>
+        <div class="p-6 text-slate-700 leading-relaxed">
+            <p>
+                يعمل مشروع Moasher CRM حالياً ببننية هجينة، حيث يستخدم خلفية برمجية (Backend) مهملة أو غير نشطة تعتمد على PHP/MySQL جنباً إلى جنب مع تطبيق صفحة واحدة (SPA) نشط يعمل على جانب العميل ومدعوم بواسطة Firebase. تعتمد الواجهة التشغيلية الأساسية (index.html) بشكل كبير على المنطق الموجود في جانب العميل، مما يعرض مفاتيح API الحساسة للخطر ويفتقر إلى آليات قوية للتعامل مع البيانات. يحدد هذا التقرير نقاط الضعف الحرجة في الأمان، والاختناقات في الأداء الناتجة عن استعلامات البيانات غير المحدودة، ومخاطر سلامة البيانات بسبب غياب التخزين المحلي. يتطلب الأمر إصلاحاً فورياً لتأمين الوصول للبيانات، وتحسين أداء الاستعلامات، وإنشاء مسار نشر مستقر.
+            </p>
+        </div>
+    </section>
+
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex items-center gap-3">
+            <i data-lucide="alert-triangle" class="text-blue-600 w-6 h-6"></i>
+            <h2 class="text-xl font-bold text-slate-800">1. المشكلات المحددة والتحليل</h2>
+        </div>
+
+        <div class="p-6 space-y-8">
+            
+            <div>
+                <h3 class="text-lg font-bold text-blue-900 mb-4 border-b border-slate-100 pb-2">1.1. البنية والتكوين</h3>
+                <div class="space-y-6">
+                    <div class="bg-slate-50 rounded-lg p-5 border border-slate-100">
+                        <h4 class="font-bold text-slate-800 mb-2">المشكلة: بنيات هجينة/متضاربة</h4>
+                        <ul class="space-y-2 text-sm text-slate-700">
+                            <li><strong class="text-blue-900">الوصف:</strong> يحتوي المشروع على نظامين متميزين: واجهة برمجة تطبيقات PHP/MySQL REST (مجلد api/) وتطبيق HTML/JS Firebase مستقل (index.html).</li>
+                            <li><strong class="text-blue-900">السبب الجذري:</strong> يعمل ملف index.html كتطبيق صفحة واحدة مستقل يتفاعل مباشرة مع Firebase، متجاوزاً خلفية PHP بالكامل. ملفات PHP (مثل config.php، customers.php، إلخ) تبدو كخلفية قديمة أو غير مكتملة.</li>
+                            <li><strong class="text-blue-900">التأثير:</strong> إرباك للمطورين، زيادة مساحة الهجوم، واحتمالية عبء صيانة للكود غير المستخدم.</li>
+                            <li><strong class="text-green-700">الحل:</strong> إهمال وأرشفة خلفية PHP إذا كان نظام Firebase هو النظام الإنتاجي المقصود. إذا كان هناك تخطيط للانتقال إلى PHP، فإن إعادة كتابة كاملة لمنطق الواجهة الأمامية مطلوبة لاستهلاك PHP API بدلاً من Firebase.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-slate-50 rounded-lg p-5 border border-slate-100">
+                        <h4 class="font-bold text-slate-800 mb-2">المشكلة: بيانات اعتماد Firebase مكشوفة</h4>
+                        <ul class="space-y-2 text-sm text-slate-700">
+                            <li><strong class="text-blue-900">الوصف:</strong> كائن firebaseConfig، بما في ذلك apiKey و authDomain و projectId، مرمز بشكل ثابت (hardcoded) في ملف index.html من جانب العميل.</li>
+                            <li><strong class="text-blue-900">السبب الجذري:</strong> تنفيذ قياسي لتطبيقات Firebase من جانب العميل، ولكنه قد يكون خطيراً بدون قواعد أمان قوية من جانب الخادم.</li>
+                            <li><strong class="text-blue-900">التأثير:</strong> خطر أمني حرج. يمكن للمهاجمين استخراج هذه البيانات. بينما apiKey عام، فبدون قواعد أمان Firestore صارمة، يمكن للمهاجمين قراءة أو تعديل أو حذف قاعدة البيانات بأكملها.</li>
+                            <li><strong class="text-green-700">الحل:</strong> التدقيق الفوري وتشديد قواعد أمان Firestore (من جانب الخادم). تقييد استخدام مفتاح API حسب المحيل (المجال/domain) في وحدة تحكم Google Cloud.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-bold text-blue-900 mb-4 border-b border-slate-100 pb-2">1.2. الأداء وقابلية التوسع</h3>
+                <div class="space-y-6">
+                    <div class="bg-slate-50 rounded-lg p-5 border border-slate-100">
+                        <h4 class="font-bold text-slate-800 mb-2">المشكلة: استعلامات بيانات غير محدودة (توقف النظام)</h4>
+                        <ul class="space-y-2 text-sm text-slate-700">
+                            <li><strong class="text-blue-900">الوصف:</strong> يجلب التطبيق مجموعة العملاء (customers collection) بالكامل عند البدء دون تقسيم للصفحات أو حدود.</li>
+                            <li><strong class="text-blue-900">السبب الجذري:</strong> يستخدم الكود getDocs(collection(db, 'customers')) (أو ما شابه) بدون معدل limit() أو startAfter().</li>
+                            <li><strong class="text-blue-900">التأثير:</strong> مرتفع. يسبب تجميد المتصفح (انسداد الخيط الرئيسي) واستنفاد سريع لحصص قراءة Firebase، مما قد يؤدي إلى رفض الخدمة (إغلاق CRM) أو تكاليف عالية.</li>
+                            <li><strong class="text-green-700">الحل:</strong> تنفيذ تقسيم الصفحات (تمرير لا نهائي أو صفحة بصفحة) وتعيين حد أولي limit(50) للاستعلام.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-bold text-blue-900 mb-4 border-b border-slate-100 pb-2">1.3. التعامل مع البيانات والنزاهة</h3>
+                <div class="space-y-6">
+                    <div class="bg-slate-50 rounded-lg p-5 border border-slate-100">
+                        <h4 class="font-bold text-slate-800 mb-2">المشكلة: فقدان البيانات عند التحديث</h4>
+                        <ul class="space-y-2 text-sm text-slate-700">
+                            <li><strong class="text-blue-900">الوصف:</strong> يتم تخزين بيانات النموذج فقط في ذاكرة المتصفح المتطايرة (RAM). إعادة تحميل الصفحة تمسح كل التقدم غير المحفوظ.</li>
+                            <li><strong class="text-blue-900">السبب الجذري:</strong> عدم وجود تنفيذ للتخزين المحلي (localStorage أو sessionStorage) لبيانات المسودة.</li>
+                            <li><strong class="text-blue-900">التأثير:</strong> خطر وظيفي مرتفع. يفقد المستخدمون العمل إذا تعطل المتصفح أو تذبذب اتصال الإنترنت أثناء إدخال البيانات.</li>
+                            <li><strong class="text-green-700">الحل:</strong> تنفيذ نظام "مسودة" باستخدام localStorage للحفظ التلقائي لمدخلات النموذج عند أحداث التغيير ومسحها عند الإرسال الناجح.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-slate-50 rounded-lg p-5 border border-slate-100">
+                        <h4 class="font-bold text-slate-800 mb-2">المشكلة: الحذف النهائي لبيانات الموظف</h4>
+                        <ul class="space-y-2 text-sm text-slate-700">
+                            <li><strong class="text-blue-900">الوصف:</strong> حذف الموظف يزيل سجله بالكامل من النظام.</li>
+                            <li><strong class="text-blue-900">السبب الجذري:</strong> تؤدي وظيفة الحذف عملية deleteDoc مدمرة على مستند الموظف.</li>
+                            <li><strong class="text-blue-900">التأثير:</strong> متوسط. فقدان السياق التاريخي. قد تعرض سجلات المبيعات التاريخية المرتبطة بالموظف المحذوف مراجع معطلة أو أسماء مفقودة.</li>
+                            <li><strong class="text-green-700">الحل:</strong> تنفيذ "الحذف الناعم" (Soft Delete) عن طريق إضافة حقل isActive: false. تحديث منطق تسجيل الدخول لرفض وصول المستخدمين حيث isActive خطأ، مع الاحتفاظ ببياناتهم لإعداد التقارير.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-bold text-blue-900 mb-4 border-b border-slate-100 pb-2">1.4. الأمان</h3>
+                <div class="space-y-6">
+                    <div class="bg-slate-50 rounded-lg p-5 border border-slate-100">
+                        <h4 class="font-bold text-slate-800 mb-2">المشكلة: منطق التفويض من جانب العميل</h4>
+                        <ul class="space-y-2 text-sm text-slate-700">
+                            <li><strong class="text-blue-900">الوصف:</strong> يتم تنفيذ التحكم في الوصول القائم على الدور (مثل إخفاء الأزرار لغير المسؤولين) عبر التلاعب بـ CSS بواسطة JavaScript (classList.add('hidden')).</li>
+                            <li><strong class="text-blue-900">السبب الجذري:</strong> يعتمد المنطق على العميل لفرض الأذونات بدلاً من قواعد أمان قاعدة البيانات.</li>
+                            <li><strong class="text-blue-900">التأثير:</strong> مرتفع. يمكن لمستخدم مطلع فحص DOM، وإزالة فئة hidden، وتشغيل وظائف المسؤول. إذا لم تتحقق القواعد الخلفية من الأذونات، فستنجح الإجراءات غير المصرح بها.</li>
+                            <li><strong class="text-green-700">الحل:</strong> مطابقة جميع القيود من جانب العميل بقواعد أمان Firestore صارمة تتحقق من request.auth.token.role قبل السماح بالكتابة.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex items-center gap-3">
+            <i data-lucide="code" class="text-blue-600 w-6 h-6"></i>
+            <h2 class="text-xl font-bold text-slate-800">متطلبات الحل والتنفيذ البرمجي</h2>
+        </div>
+
+        <div class="p-6 space-y-8">
+
+            <div class="border-b border-slate-100 pb-8 last:border-0 last:pb-0">
+                <h3 class="text-lg font-bold text-blue-900 mb-2">حل مشكلة توقف النظام (استعلامات البيانات غير المحدودة)</h3>
+                
+                <div class="mb-4">
+                    <h4 class="font-bold text-sm text-slate-700 mb-1">بيان المشكلة:</h4>
+                    <p class="text-sm text-slate-600">التطبيق يحاول تحميل كافة سجلات العملاء دفعة واحدة عند البدء، مما يؤدي إلى تجميد المتصفح واستهلاك حصص القراءة.</p>
+                </div>
+
+                <div class="mb-4">
+                    <h4 class="font-bold text-sm text-slate-700 mb-1">متطلبات الحل:</h4>
+                    <ul class="list-disc list-inside text-sm text-slate-600">
+                        <li>تعديل استعلام جلب العملاء لاستخدام دالة <code>limit()</code>.</li>
+                        <li>تحديد عدد السجلات المجلوبة مبدئياً بـ 50 سجل.</li>
+                        <li>إضافة استيراد للدالة <code>limit</code> من مكتبة Firebase Firestore.</li>
+                    </ul>
+                </div>
+
+                <div class="mb-4">
+                    <h4 class="font-bold text-sm text-slate-700 mb-1">كود التنفيذ:</h4>
+                    <pre><code>
+// Import 'limit' and 'query' from firebase/firestore import { collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js";
+
+// Function to fetch recent customers efficiently async function loadInitialCustomers() { try { const customersRef = collection(db, 'customers');
+
+    // Create a query that limits results to the most recent 50
+    const q = query(
+        customersRef, 
+        orderBy('createdAt', 'desc'), 
+        limit(50)
+    );
+
+    const querySnapshot = await getDocs(q);
+    
+    querySnapshot.forEach((doc) => {
+        // Process and display customer data
+        console.log(doc.id, " => ", doc.data());
+        renderCustomerRow(doc); // Hypothetical render function
+    });
+    
+} catch (error) {
+    console.error("Error loading customers:", error);
+}
+} </code></pre> </div>
+
+                <div>
+                    <h4 class="font-bold text-sm text-slate-700 mb-1">شرح الحل:</h4>
+                    <p class="text-sm text-slate-600">
+                        يقوم الكود أعلاه بإنشاء استعلام (query) لا يطلب قاعدة البيانات بأكملها. باستخدام <code>limit(50)</code>، نضمن أن المتصفح يعالج كمية صغيرة من البيانات، مما يمنع التجميد ويحافظ على سرعة الاستجابة. كما يقلل هذا بشكل كبير من تكاليف القراءة من Firebase.
+                    </p>
+                </div>
+            </div>
+
+            <div class="border-b border-slate-100 pb-8 last:border-0 last:pb-0">
+                <h3 class="text-lg font-bold text-blue-900 mb-2">حل مشكلة فقدان البيانات (نظام المسودة)</h3>
+                
+                <div class="mb-4">
+                    <h4 class="font-bold text-sm text-slate-700 mb-1">بيان المشكلة:</h4>
+                    <p class="text-sm text-slate-600">عند تحديث الصفحة عن طريق الخطأ، يفقد المستخدم جميع البيانات التي قام بإدخالها في النماذج.</p>
+                </div>
+
+                <div class="mb-4">
+                    <h4 class="font-bold text-sm text-slate-700 mb-1">متطلبات الحل:</h4>
+                    <ul class="list-disc list-inside text-sm text-slate-600">
+                        <li>مراقبة جميع حقول الإدخال (input, select, textarea).</li>
+                        <li>حفظ القيمة في <code>localStorage</code> عند كل حدث <code>input</code>.</li>
+                        <li>استعادة القيم المحفوظة تلقائياً عند تحميل الصفحة.</li>
+                        <li>مسح البيانات المحفوظة بعد الإرسال الناجح للنموذج.</li>
+                    </ul>
+                </div>
+
+                <div class="mb-4">
+                    <h4 class="font-bold text-sm text-slate-700 mb-1">كود التنفيذ:</h4>
+                    <pre><code>
+// 1. Initialize Auto-Save Logic function initAutoSave() { const inputs = document.querySelectorAll('#addCustomerForm input, #addCustomerForm select, #addCustomerForm textarea');
+
+inputs.forEach(input => {
+    // Load saved data on page load
+    const savedValue = localStorage.getItem('draft_' + input.name);
+    if (savedValue) {
+        input.value = savedValue;
+    }
+
+    // Save data on every keystroke/change
+    input.addEventListener('input', (e) => {
+        if(e.target.name) {
+            localStorage.setItem('draft_' + e.target.name, e.target.value);
+        }
+    });
+});
+}
+
+// 2. Clear Draft Data Function (Call this after successful DB write) function clearFormDraft() { const inputs = document.querySelectorAll('#addCustomerForm input, #addCustomerForm select, #addCustomerForm textarea'); inputs.forEach(input => { localStorage.removeItem('draft_' + input.name); input.value = ''; // Reset UI }); } </code></pre> </div>
+
+                <div>
+                    <h4 class="font-bold text-sm text-slate-700 mb-1">شرح الحل:</h4>
+                    <p class="text-sm text-slate-600">
+                        يستمع الكود لأي تغيير في حقول النموذج ويحفظ القيمة فوراً في تخزين المتصفح المحلي (LocalStorage). حتى لو تم إغلاق المتصفح أو تحديث الصفحة، سيقوم الكود باسترجاع القيم المحفوظة تلقائياً عند الفتح مرة أخرى، مما يضمن عدم ضياع جهد الموظف.
+                    </p>
+                </div>
+            </div>
+
+            <div class="border-b border-slate-100 pb-8 last:border-0 last:pb-0">
+                <h3 class="text-lg font-bold text-blue-900 mb-2">حل مشكلة حذف بيانات الموظفين (الحذف الناعم)</h3>
+                
+                <div class="mb-4">
+                    <h4 class="font-bold text-sm text-slate-700 mb-1">بيان المشكلة:</h4>
+                    <p class="text-sm text-slate-600">حذف الموظف يؤدي لضياع اسمه من سجلات المبيعات القديمة، مما يشوه التقارير التاريخية.</p>
+                </div>
+
+                <div class="mb-4">
+                    <h4 class="font-bold text-sm text-slate-700 mb-1">متطلبات الحل:</h4>
+                    <ul class="list-disc list-inside text-sm text-slate-600">
+                        <li>استبدال عملية <code>deleteDoc</code> بعملية <code>updateDoc</code>.</li>
+                        <li>تعيين حقل جديد باسم <code>isActive</code> بقيمة <code>false</code>.</li>
+                        <li>تعديل وظيفة تسجيل الدخول للتحقق من هذا الحقل ومنع الدخول إذا كان <code>false</code>.</li>
+                    </ul>
+                </div>
+
+                <div class="mb-4">
+                    <h4 class="font-bold text-sm text-slate-700 mb-1">كود التنفيذ:</h4>
+                    <pre><code>
+// Part A: Deactivate Employee (Instead of Delete) async function deactivateEmployee(employeeId) { const employeeRef = doc(db, 'users', employeeId);
+
+// Update the flag instead of deleting the document
+await updateDoc(employeeRef, {
+    isActive: false,
+    updatedAt: serverTimestamp()
+});
+
+alert('Employee account deactivated securely.');
+}
+
+// Part B: Enhanced Login Verification async function verifyLogin(email, password) { const q = query(collection(db, 'users'), where('email', '==', email)); const querySnapshot = await getDocs(q);
+
+if (querySnapshot.empty) return false;
+
+const userData = querySnapshot.docs[0].data();
+
+// Check if account is active
+if (userData.isActive === false) {
+    alert("This account has been deactivated.");
+    return false;
+}
+
+// Proceed with password verification...
+return userData.password === password; 
+} </code></pre> </div>
+
+                <div>
+                    <h4 class="font-bold text-sm text-slate-700 mb-1">شرح الحل:</h4>
+                    <p class="text-sm text-slate-600">
+                        بدلاً من إزالة المستند نهائياً، نقوم فقط بتحديث حالته إلى "غير نشط". تظل بيانات الموظف (الاسم، الدور) موجودة في قاعدة البيانات لضمان سلامة التقارير القديمة، ولكن منطق تسجيل الدخول المحدث يمنعه من الوصول للنظام الجديد.
+                    </p>
+                </div>
+            </div>
+
+            <div class="border-b border-slate-100 pb-8 last:border-0 last:pb-0">
+                <h3 class="text-lg font-bold text-blue-900 mb-2">حل مشكلة الأمان (قواعد Firestore)</h3>
+                
+                <div class="mb-4">
+                    <h4 class="font-bold text-sm text-slate-700 mb-1">بيان المشكلة:</h4>
+                    <p class="text-sm text-slate-600">الاعتماد على إخفاء الأزرار في الواجهة (Client-side) ليس أماناً حقيقياً؛ يمكن للمهاجمين تجاوز ذلك بسهولة.</p>
+                </div>
+
+                <div class="mb-4">
+                    <h4 class="font-bold text-sm text-slate-700 mb-1">متطلبات الحل:</h4>
+                    <ul class="list-disc list-inside text-sm text-slate-600">
+                        <li>كتابة قواعد أمان (Security Rules) في وحدة تحكم Firebase.</li>
+                        <li>منع القراءة/الكتابة لغير المصادق عليهم.</li>
+                        <li>التحقق من دور المستخدم (Admin) قبل السماح بعمليات الحذف أو التعديل الحساسة.</li>
+                    </ul>
+                </div>
+
+                <div class="mb-4">
+                    <h4 class="font-bold text-sm text-slate-700 mb-1">كود التنفيذ (Firestore Rules):</h4>
+                    <pre><code>
+rules_version = '2'; service cloud.firestore { match /databases/{database}/documents {
+
+// Helper function to check if user is admin
+function isAdmin() {
+  return request.auth != null && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+}
+
+// Helper function to check if user is signed in
+function isSignedIn() {
+  return request.auth != null;
+}
+
+// Customers Collection Rules
+match /customers/{customerId} {
+  // Anyone signed in can read/create
+  allow read, create: if isSignedIn();
+  
+  // Only admins can delete
+  allow delete: if isAdmin();
+  
+  // Updates allowed if signed in
+  allow update: if isSignedIn();
+}
+
+// Users Collection (Employees)
+match /users/{userId} {
+  // Only admins can read/write user data to prevent leakage
+  allow read, write: if isAdmin();
+}
+} } </code></pre> </div>
+
+                <div>
+                    <h4 class="font-bold text-sm text-slate-700 mb-1">شرح الحل:</h4>
+                    <p class="text-sm text-slate-600">
+                        هذه القواعد تُطبق على خوادم جوجل (Server-side). حتى لو حاول مهاجم استخدام وحدة التحكم (Console) أو كود خبيث لحذف عميل، سيرفض الخادم الطلب فوراً لأنه ليس لديه صلاحية "admin"، بغض النظر عما تظهره واجهة المستخدم.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex items-center gap-3">
+            <i data-lucide="check-circle" class="text-blue-600 w-6 h-6"></i>
+            <h2 class="text-xl font-bold text-slate-800">2. استراتيجية الإصلاح</h2>
+        </div>
+        <div class="p-6">
+            <p class="mb-6 text-slate-700">تعطي هذه الخطة الأولوية للاستقرار (إيقاف الأعطال) والأمان (حماية البيانات) قبل الانتقال إلى تحسينات الميزات.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <div class="border border-slate-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-lg font-bold text-slate-900">المرحلة 1: الاستقرار (إجراء فوري)</h3>
+                    </div>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-2 text-sm text-slate-700">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-green-500 mt-0.5 shrink-0"></i>
+                            <span><strong>إصلاح:</strong> تنفيذ limit(50) على استعلام تحميل العملاء الأولي في index.html.</span>
+                        </li>
+                        <li class="flex items-start gap-2 text-sm text-slate-700 ml-6 bg-slate-50 p-2 rounded">
+                            <span><strong>السبب:</strong> يمنع مشكلة "توقف CRM" فوراً.</span>
+                        </li>
+                        <li class="flex items-start gap-2 text-sm text-slate-700">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-green-500 mt-0.5 shrink-0"></i>
+                            <span><strong>إصلاح:</strong> إضافة منطق الحفظ التلقائي في localStorage لنموذج "إضافة عميل".</span>
+                        </li>
+                        <li class="flex items-start gap-2 text-sm text-slate-700 ml-6 bg-slate-50 p-2 rounded">
+                            <span><strong>السبب:</strong> يوقف شكاوى فقدان البيانات ويحسن الثقة في النظام.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="border border-slate-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-lg font-bold text-slate-900">المرحلة 2: تشديد الأمان</h3>
+                    </div>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-2 text-sm text-slate-700">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-green-500 mt-0.5 shrink-0"></i>
+                            <span><strong>إصلاح:</strong> تدقيق قواعد أمان Firestore (يتطلب الوصول لوحدة تحكم Firebase).</span>
+                        </li>
+                        <li class="flex items-start gap-2 text-sm text-slate-700">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-green-500 mt-0.5 shrink-0"></i>
+                            <span><strong>إصلاح:</strong> تقييد مفاتيح API في وحدة تحكم Google Cloud بنطاق Hostinger المحدد.</span>
+                        </li>
+                        <li class="flex items-start gap-2 text-sm text-slate-700 ml-6 bg-slate-50 p-2 rounded">
+                            <span><strong>السبب:</strong> يخفف المخاطر التي تشكلها بيانات الاعتماد المكشوفة في ملف HTML.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="border border-slate-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-lg font-bold text-slate-900">المرحلة 3: سلامة البيانات (إدارة الموظفين)</h3>
+                    </div>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-2 text-sm text-slate-700">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-green-500 mt-0.5 shrink-0"></i>
+                            <span><strong>إصلاح:</strong> تعديل وظيفة حذف الموظف لإجراء "حذف ناعم" (تحديث علامة isActive).</span>
+                        </li>
+                        <li class="flex items-start gap-2 text-sm text-slate-700">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-green-500 mt-0.5 shrink-0"></i>
+                            <span><strong>إصلاح:</strong> تحديث منطق المصادقة للتحقق من علامة isActive أثناء تسجيل الدخول.</span>
+                        </li>
+                        <li class="flex items-start gap-2 text-sm text-slate-700 ml-6 bg-slate-50 p-2 rounded">
+                            <span><strong>السبب:</strong> يحافظ على دقة البيانات التاريخية.</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="border border-slate-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-lg font-bold text-slate-900">المرحلة 4: التنظيف</h3>
+                    </div>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-2 text-sm text-slate-700">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-green-500 mt-0.5 shrink-0"></i>
+                            <span><strong>إجراء:</strong> نقل كود index.html إلى ملفات .js و .css منفصلة لسهولة الصيانة.</span>
+                        </li>
+                        <li class="flex items-start gap-2 text-sm text-slate-700">
+                            <i data-lucide="arrow-right" class="w-4 h-4 text-green-500 mt-0.5 shrink-0"></i>
+                            <span><strong>إجراء:</strong> إزالة مجلد api/ الخاص بـ PHP غير المستخدم إذا تم التأكد من صلته بالنظام القديم فقط.</span>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex items-center gap-3">
+            <i data-lucide="shield" class="text-blue-600 w-6 h-6"></i>
+            <h2 class="text-xl font-bold text-slate-800">3. طرق الاختبار الآمنة</h2>
+        </div>
+
+        <div class="p-6">
+            <p class="mb-4 text-slate-700">بما أن هذا ملف إنتاجي مباشر بدون بيئة تجريبية، يجب أن يكون الاختبار حذراً.</p>
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <p class="text-blue-800 font-semibold">قاعدة عامة: لا تقم بتحرير index.html مباشرة على الخادم. قم بتنزيله، تحريره محلياً، اختباره محلياً، ثم رفعه.</p>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-right">
+                    <thead>
+                        <tr class="bg-slate-50">
+                            <th class="p-4 text-slate-500 font-semibold border border-slate-200">نوع الاختبار</th>
+                            <th class="p-4 text-blue-900 font-bold border border-slate-200">الطريقة</th>
+                            <th class="p-4 text-slate-800 font-bold border border-slate-200">التحقق والتخفيف</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-medium align-top">نوع الاختبار 1: الأداء (اختبار الحمل)</td>
+                            <td class="p-3 border border-slate-200 align-top">استخدم أدوات المطور في المتصفح (تبويب الشبكة Network).</td>
+                            <td class="p-3 border border-slate-200 align-top">
+                                <p class="mb-2"><strong>التحقق:</strong> أعد تحميل الصفحة باستخدام كود limit() الجديد. تحقق من تنزيل حوالي 50 مستنداً فقط بدلاً من 1000+. تحقق من أن تبويب "الذاكرة" لا يظهر ارتفاعاً حاداً.</p>
+                                <p><strong>تخفيف المخاطر:</strong> إذا كسر الاستعلام الجديد القائمة (مثل مشاكل الترتيب)، ما عليك سوى العودة إلى نسخة index.html الاحتياطية السابقة فوراً.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-medium align-top">نوع الاختبار 2: استمرارية البيانات (المسودات)</td>
+                            <td class="p-3 border border-slate-200 align-top">افتح نموذج "إضافة عميل". اكتب "اسم اختبار". قم بتحديث الصفحة.</td>
+                            <td class="p-3 border border-slate-200 align-top">
+                                <p class="mb-2"><strong>التحقق:</strong> يجب أن يعاود حقل "اسم اختبار" الظهور تلقائياً.</p>
+                                <p><strong>اختبار آمن:</strong> لا تنقر على "إرسال". فقط تحقق من منطق إعادة التعبئة.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 border border-slate-200 font-medium align-top">نوع الاختبار 3: الحذف الناعم</td>
+                            <td class="p-3 border border-slate-200 align-top">أنشئ موظفاً وهمياً "مستخدم اختبار". قم بتنفيذ إجراء "الحذف" (الذي أصبح الآن إجراء "إلغاء التنشيط").</td>
+                            <td class="p-3 border border-slate-200 align-top">
+                                <p class="mb-2"><strong>التحقق:</strong></p>
+                                <ul class="list-disc mr-4 space-y-1">
+                                    <li>حاول تسجيل الدخول كـ "مستخدم اختبار" -> يجب أن يفشل.</li>
+                                    <li>تحقق من قسم "التقارير" -> يجب أن يظهر "مستخدم اختبار" في الإحصائيات التاريخية.</li>
+                                </ul>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section class="bg-gradient-to-r from-slate-800 to-slate-900 rounded-xl shadow-lg text-white overflow-hidden">
+        <div class="p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="w-full">
+                <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                    <i data-lucide="key" class="w-6 h-6"></i>
+                    4. متطلبات الوصول
+                </h2>
+                <p class="text-slate-300 mb-6">لتشخيص المشاكل وحلها بشكل صحيح، يلزم الوصول التالي:</p>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div class="bg-white/10 p-5 rounded-lg border border-white/20">
+                        <h3 class="font-bold text-lg mb-2">مدير ملفات Hostinger (FTP/hPanel)</h3>
+                        <div class="mb-2"><span class="bg-blue-600 text-xs px-2 py-1 rounded">الحالة: مطلوب</span></div>
+                        <p class="text-sm text-slate-200"><strong>السبب:</strong> لتنزيل index.html الحالي للتحرير ورفع النسخة المصححة.</p>
+                    </div>
+
+                    <div class="bg-white/10 p-5 rounded-lg border border-white/20">
+                        <h3 class="font-bold text-lg mb-2">وحدة تحكم مشروع Firebase</h3>
+                        <div class="mb-2"><span class="bg-red-600 text-xs px-2 py-1 rounded">الحالة: حرج / مطلوب</span></div>
+                        <div class="text-sm text-slate-200 space-y-2">
+                            <p><strong>السبب:</strong></p>
+                            <ul class="list-disc mr-4 space-y-1">
+                                <li><strong>قواعد الأمان:</strong> لا يمكن إصلاح ثغرة الأمان الأكثر خطورة (البيانات المكشوفة) في ملفات الكود. يجب إصلاحها في وحدة تحكم Firebase ضمن "Firestore Database > Rules".</li>
+                                <li><strong>الفهارس:</strong> غالباً ما تتطلب إضافة الفرز/التصفية (مثل orderBy('createdAt')) إنشاء فهارس مركبة في وحدة تحكم Firebase. بدون الوصول، قد تفشل الاستعلامات المصححة مع خطأ "Missing Index".</li>
+                                <li><strong>حصص الاستخدام:</strong> لتشخيص خطأ "Too many requests" بشكل قاطع، نحتاج لرؤية رسوم الاستخدام البيانية في وحدة التحكم.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex items-center gap-3">
+            <i data-lucide="thumbs-up" class="text-blue-600 w-6 h-6"></i>
+            <h2 class="text-xl font-bold text-slate-800">5. التوصيات النهائية</h2>
+        </div>
+        <div class="p-6">
+            <p class="mb-6 text-slate-700">المشروع حالياً هش بسبب اعتماده الكبير على ملف HTML ضخم واحد ومنطق من جانب العميل.</p>
+            
+            <div class="space-y-4">
+                <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                    <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600 shrink-0">
+                        <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                    </div>
+                    <span class="text-slate-700"><strong>فوري:</strong> تطبيق إصلاح التقسيم/الحد لإيقاف الأعطال.</span>
+                </div>
+                
+                <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                    <div class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
+                        <i data-lucide="shield-alert" class="w-4 h-4"></i>
+                    </div>
+                    <span class="text-slate-700"><strong>قصير المدى:</strong> الحصول على الوصول لوحدة تحكم Firebase لتأمين قواعد قاعدة البيانات.</span>
+                </div>
+
+                <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                    <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 shrink-0">
+                        <i data-lucide="layers" class="w-4 h-4"></i>
+                    </div>
+                    <span class="text-slate-700"><strong>طويل المدى:</strong> إعادة هيكلة التطبيق إلى إطار عمل حديث (React/Vue) أو على الأقل تقسيم index.html إلى ملفات JavaScript معيارية لتحسين الصيانة وفصل الاهتمامات. إزالة كود PHP الميت لتجنب الارتباك.</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer class="bg-slate-900 text-slate-400 py-8 mt-12">
+    <div class="container mx-auto px-4 text-center">
+        <p>&copy; 2025 Moasher CRM Technical Audit.</p>
+    </div>
+</footer>
+
+<script>
+    lucide.createIcons();
+</script>
+</body>
+
+</html>
